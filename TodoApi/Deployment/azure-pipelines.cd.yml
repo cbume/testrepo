@@ -1,0 +1,92 @@
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+name: $(majorMinorVersion)$(Rev:.r)
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - develop
+    - release/*
+    - hotfix/*
+  paths:
+    exclude:
+    - BusinessFitness.ActiveSync/ActiveSync.Desktop
+
+pr: none
+
+pool:
+  vmImage: 'ubuntu-22.04'
+
+variables:
+  projectName: 'ActiveSync.Cloud'
+  workingDir: '$(System.DefaultWorkingDirectory)/BusinessFitness.ActiveSync'
+  projectShortName: 'activesync.cloud'
+  dockerFile: '$(workingDir)/$(projectName)/Dockerfile'
+  dockerRepository: 'activesync.cloud'
+  configFolderPath: '$(workingDir)/$(projectName)/Deployment'
+
+steps:
+
+- checkout: self
+  persistCredentials: true
+
+- task: DownloadSecureFile@1
+  name: nugetconfig
+  inputs:
+    secureFile: 'nuget.config'
+
+- task: Bash@3
+  displayName: 'Copy nuget.config into repo'
+  inputs:
+    targetType: 'inline'
+    script: |
+      cp $(nugetconfig.secureFilePath) $(workingDir)/$(projectName)/nuget.config
+
+- task: Docker@2
+  displayName: 'Docker Build'
+  inputs:
+    command: build
+    Dockerfile: '$(dockerFile)'
+    buildContext: $(workingDir)
+    containerRegistry: 'Business Fitness Container Registry'
+    repository: '$(dockerRepository)'
+    tags: |
+      $(projectShortName)
+      $(Build.BuildNumber)
+    arguments: '--build-arg Version=$(Build.BuildNumber)'
+
+- task: Docker@2
+  displayName: 'Docker Push'
+  inputs:
+    command: push
+    containerRegistry: 'Business Fitness Container Registry'
+    repository: '$(dockerRepository)'
+    tags: |
+      $(projectShortName)
+      $(Build.BuildNumber)
+
+- task: PublishPipelineArtifact@1
+  displayName: 'Publish *.template.json templates to pipeline artifacts'
+  inputs:
+    path: $(configFolderPath)
+    artifact: Config
+
+- task: Bash@3
+  displayName: 'Tag repo with build version'
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "pwd"
+      pwd
+      echo "ls -a"
+      ls -a
+      echo "Running: git tag build-api-$VERSION"
+      git tag build-cloud-$VERSION
+      echo "Running: git push --tags"
+      git push --tags
+  env:
+    VERSION: $(Build.BuildNumber)

@@ -1,0 +1,51 @@
+{
+  "Environment": {
+    "Name": "[SetByPipeline]",
+    "ApplicationName": "ActiveSync.Cloud"
+  },
+  "Destination": "[SetByPipeline]",
+  "DataverseOAuthResource": {
+    "Name": "Business Fitness Dataverse Api",
+    "BaseUri": "[SetByPipeline]",
+    "Scope": "dvs-api bf-trusted"
+  },
+  "HowNowXOAuthResource": {
+    "Name": "HowNow X Hub",
+    "BaseUri": "[SetByPipeline]",
+    "Scope": "hnx-hub-api bf-trusted"
+  },
+  "IdentityClientCredentials": {
+    "IdentityServer": "[SetByPipeline]",
+    "ClientId": "dvs-sync",
+    "ClientSecret": "[SetByPipeline]"
+  },
+  "XPMConfiguration": {
+    "AppName": "Active Sync",
+    "Scope": "openid profile email offline_access practicemanager.read",
+    "ClientId": "[SetByPipeline]",
+    "ClientSecret": "[SetByPipeline]"
+  },
+  "DatagetOAuthResource": {
+    "Name": "[BuildPipelineVariable]",
+    "BaseUri": "[BuildPipelineVariable]",
+    "Scope": "[BuildPipelineVariable]"
+  },
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Verbose",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Seq",
+        "Args": {
+          "serverUrl": "[SetByPipeline]",
+          "apiKey": "[SetByPipeline]"
+        }
+      }
+    ]
+  }
+}
