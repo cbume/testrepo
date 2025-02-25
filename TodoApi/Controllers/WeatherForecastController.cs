@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
 
 namespace TodoApi.Controllers
 {
@@ -14,10 +16,12 @@ namespace TodoApi.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
+        private readonly WeatherDbContext _context;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, WeatherDbContext context)
         {
             _logger = logger;
+            _context = context;
         }
 
         [HttpGet(Name = "GetWeatherForecast")]
@@ -31,7 +35,7 @@ namespace TodoApi.Controllers
             })
             .ToArray();
         }
-        /*
+
         // 🚨 VULNERABLE ENDPOINT: Reads file contents from an unsafe user-supplied path
         [HttpGet("readfile")]
         public IActionResult GetFileContents([FromQuery] string path)
@@ -52,6 +56,29 @@ namespace TodoApi.Controllers
                 return BadRequest($"Error reading file: {ex.Message}");
             }
         }
-*/
+
+        [HttpPost("runsql")]
+        public IActionResult RunSql([FromBody] string query)
+        {
+            var result = _context.Forecasts.FromSqlRaw(query);
+            return Ok(result);
+        }
+
+        [HttpGet("password")]
+        public IActionResult GetPassword()
+        {
+            const string password = "P@ssw0rd";
+            var encryptedPassword = SHA1.HashData(Encoding.UTF8.GetBytes(password));
+
+            return Ok(encryptedPassword);
+        }
+
+        [HttpGet("regex")]
+        public IActionResult DoRegex([FromQuery] string pattern)
+        {
+            var match = Regex.Match("abc", pattern);
+
+            return Ok(match.Success);
+        }
     }
 }

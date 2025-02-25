@@ -1,3 +1,5 @@
+using TodoApi;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -9,6 +11,9 @@ builder.Services.AddControllers();
     //opt.UseInMemoryDatabase("TodoList"));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSqlServer<WeatherDbContext>(
+    "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Weather;Integrated Security=True;");
 
 var app = builder.Build();
 
